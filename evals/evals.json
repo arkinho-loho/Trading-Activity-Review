@@ -1,0 +1,102 @@
+{
+  "eval_cases": [
+    {
+      "id": 1,
+      "description": "分析交割单触发",
+      "input": "分析我的交割单",
+      "should_trigger": true,
+      "expected_action": "激活技能，要求提供文件路径"
+    },
+    {
+      "id": 2,
+      "description": "计算胜率触发",
+      "input": "计算我的股票胜率",
+      "should_trigger": true,
+      "expected_action": "激活技能，进入分析流程"
+    },
+    {
+      "id": 3,
+      "description": "赔率分析触发",
+      "input": "帮我分析股票的赔率",
+      "should_trigger": true,
+      "expected_action": "激活技能"
+    },
+    {
+      "id": 4,
+      "description": "斜杠命令触发",
+      "input": "/股票分析",
+      "should_trigger": true,
+      "expected_action": "激活技能"
+    },
+    {
+      "id": 5,
+      "description": "提供文件路径触发",
+      "input": "我的交割单在 Desktop/交割单.xlsx",
+      "should_trigger": true,
+      "expected_action": "激活技能，直接读取文件"
+    },
+    {
+      "id": 6,
+      "description": "凯利仓位触发",
+      "input": "帮我算算凯利仓位",
+      "should_trigger": true,
+      "expected_action": "激活技能"
+    },
+    {
+      "id": 7,
+      "description": "交割单关键词触发",
+      "input": "这个月交割单可以分析一下吗",
+      "should_trigger": true,
+      "expected_action": "激活技能"
+    },
+    {
+      "id": 8,
+      "description": "不买股票 - 交易操作不触发",
+      "input": "帮我买一只股票",
+      "should_trigger": false,
+      "expected_action": "不激活（交易操作）"
+    },
+    {
+      "id": 9,
+      "description": "推荐股票不触发",
+      "input": "推荐一只好股票",
+      "should_trigger": false,
+      "expected_action": "不激活（选股建议）"
+    },
+    {
+      "id": 10,
+      "description": "行情查询不触发",
+      "input": "今天股市怎么样",
+      "should_trigger": false,
+      "expected_action": "不激活（行情查询）"
+    },
+    {
+      "id": 11,
+      "description": "知识问答不触发",
+      "input": "什么是凯利公式",
+      "should_trigger": false,
+      "expected_action": "不激活（知识问答）"
+    },
+    {
+      "id": 12,
+      "description": "基金分析不触发",
+      "input": "帮我分析一下基金",
+      "should_trigger": false,
+      "expected_action": "不激活（需要交割单数据）"
+    },
+    {
+      "id": 13,
+      "description": "卖股票不触发",
+      "input": "把这只股票卖掉",
+      "should_trigger": false,
+      "expected_action": "不激活（交易操作）"
+    },
+    {
+      "id": 14,
+      "description": "基本面查询不触发",
+      "input": "看一下这只股票的基本面",
+      "should_trigger": false,
+      "expected_action": "不激活（基本面查询）"
+    }
+  ]
+}
