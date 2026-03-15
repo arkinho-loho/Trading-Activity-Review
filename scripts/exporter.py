@@ -147,31 +147,3 @@ def export_to_excel(
             period_df.to_excel(writer, sheet_name='按期限统计', index=False)
 
     return excel_path
-
-
-def export_error_log(errors: List[Dict], output_dir: str) -> str | None:
-    """
-    导出错误日志（仅当有错误时生成）
-
-    Args:
-        errors: 错误列表
-        output_dir: 输出目录
-
-    Returns:
-        str | None: 错误日志文件路径，无错误时返回None
-    """
-    # 只在有错误时生成文件
-    if not errors:
-        return None
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    date_str = datetime.now().strftime('%Y-%m-%d')
-    error_path = os.path.join(output_dir, f'错误日志_{date_str}.json')
-
-    # 导出为JSON
-    import json
-    with open(error_path, 'w', encoding='utf-8') as f:
-        json.dump(errors, f, ensure_ascii=False, indent=2)
-
-    return error_path

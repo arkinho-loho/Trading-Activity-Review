@@ -43,7 +43,7 @@ def analyze_delivery_slip(
     # 确定输出目录
     if output_dir is None:
         base_dir = os.path.dirname(os.path.abspath(file_path))
-        output_dir = os.path.join(base_dir, '股票分析_' + datetime.now().strftime('%Y-%m-%d'))
+        output_dir = os.path.join(base_dir, '交易活动回顾_' + datetime.now().strftime('%Y-%m-%d'))
 
     print(f"开始分析交割单: {file_path}")
     print(f"输出目录: {output_dir}")
