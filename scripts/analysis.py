@@ -11,7 +11,7 @@ import pandas as pd
 from parser import parse_delivery_slip, get_summary
 from classifier import classify_dataframe, get_type_statistics
 from pairing import pair_trades, categorize_by_holding_period
-from price import get_multiple_prices, calculate_floating_profit
+# 价格获取已移除（只分析已平仓交易）
 from metrics import (
     calculate_metrics,
     calculate_metrics_by_type,
@@ -89,42 +89,26 @@ def analyze_delivery_slip(
     holdings = merge_holdings(holdings)
     print(f"  - 合并后持仓: {len(holdings)} 只")
 
+    # 不获取持仓价格，不纳入胜率/赔率计算
     holdings_with_prices = holdings
-    if include_holdings and holdings:
-        # ========== 步骤6: 获取持仓价格 ==========
-        print("\n[6/9] 获取持仓价格...")
-        securities = [{'code': h['code'], 'name': h['name']} for h in holdings]
-        prices = get_multiple_prices(securities)
 
-        # 计算浮动盈亏
-        holdings_with_prices = calculate_floating_profit(holdings, prices)
-
-        # 统计获取价格失败的持仓
-        failed_count = sum(1 for h in holdings_with_prices if h.get('current_price') is None)
-        if failed_count > 0:
-            errors.append({
-                'type': 'price_fetch_failed',
-                'message': f'有 {failed_count} 个持仓无法获取价格',
-                'severity': 'warning'
-            })
-            print(f"  - 无法获取价格: {failed_count} 个")
-
-    # ========== 步骤7: 计算指标 ==========
-    print("\n[7/9] 计算交易指标...")
-    metrics = calculate_metrics(paired_trades, holdings_with_prices, include_holdings)
+    # ========== 步骤6: 计算指标 ==========
+    # 只计算已平仓交易的胜率和赔率（不纳入持仓）
+    print("\n[6/9] 计算交易指标...")
+    metrics = calculate_metrics(paired_trades, holdings, include_holdings=False)
     print(f"  - 胜率: {metrics['win_rate']:.2%}")
     print(f"  - 赔率: {metrics['odds']:.2f}")
     print(f"  - 凯利仓位: {metrics['kelly']:.2%}")
 
-    # ========== 步骤8: 分类统计 ==========
-    print("\n[8/9] 分类统计...")
-    type_metrics = calculate_metrics_by_type(paired_trades, holdings_with_prices)
+    # ========== 步骤7: 分类统计 ==========
+    print("\n[7/9] 分类统计...")
+    type_metrics = calculate_metrics_by_type(paired_trades, holdings)
     period_metrics = calculate_metrics_by_holding_period(paired_trades)
     print(f"  - 证券类型: {len(type_metrics)} 种")
     print(f"  - 持有期限: {len(period_metrics)} 类")
 
-    # ========== 步骤9: 生成报告（持仓已在步骤5合并） ==========
-    print("\n[9/9] 生成报告...")
+    # ========== 步骤8: 生成报告 ==========
+    print("\n[8/9] 生成报告...")
 
     # 导出Excel
     excel_path = export_to_excel(
@@ -202,6 +186,10 @@ def get_user_confirmation(summary: Dict) -> str:
 def main():
     """测试入口"""
     import sys
+    import io
+
+    # 设置标准输出编码为 UTF-8，解决 Windows GBK 环境下的编码问题
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
     if len(sys.argv) < 2:
         print("用法: python analysis.py <交割单文件路径>")

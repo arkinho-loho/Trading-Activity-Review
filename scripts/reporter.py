@@ -311,11 +311,11 @@ def _generate_content(
                 buy_date = buy_date.strftime('%Y-%m-%d')
             buy_price = h.get('buy_price', 0)
             quantity = h.get('quantity', 0)
-            current_price = h.get('current_price', 'N/A')
+            current_price = h.get('current_price')
             floating = h.get('floating_profit', 0)
             floating_pct = h.get('floating_profit_pct', 0)
 
-            if current_price != 'N/A':
+            if current_price is not None and current_price != 'N/A':
                 lines.append(f"| {code} | {name} | {buy_date} | ¥{buy_price:.2f} | {quantity} | ¥{current_price:.2f} | ¥{floating:.2f} | {floating_pct:.2f}% |")
             else:
                 lines.append(f"| {code} | {name} | {buy_date} | ¥{buy_price:.2f} | {quantity} | N/A | N/A | N/A |")

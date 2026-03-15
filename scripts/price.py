@@ -8,16 +8,37 @@ from typing import Dict, Optional, List
 import pandas as pd
 from datetime import datetime, timedelta
 import time
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# 创建带重试机制的 session
+_session = None
+
+def _get_session() -> requests.Session:
+    """获取带重试机制的 session"""
+    global _session
+    if _session is None:
+        _session = requests.Session()
+        retry = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504]
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        _session.mount('http://', adapter)
+        _session.mount('https://', adapter)
+    return _session
 
 
-def get_stock_price(code: str, name: str = '', max_retries: int = 3) -> Optional[float]:
+def get_stock_price(code: str, name: str = '', max_retries: int = 1) -> Optional[float]:
     """
-    获取股票/ETF最新价格
+    获取股票/ETF最新价格（快速模式，不重试）
 
     Args:
         code: 证券代码（6位数字）
         name: 证券名称（用于类型判断）
-        max_retries: 最大重试次数
+        max_retries: 最大重试次数（默认不重试）
 
     Returns:
         Optional[float]: 最新价格，失败返回None
@@ -25,25 +46,18 @@ def get_stock_price(code: str, name: str = '', max_retries: int = 3) -> Optional
     # 判断证券类型
     security_type = _get_security_type(code, name)
 
-    for attempt in range(max_retries):
-        try:
-            if security_type == '基金':
-                price = _get_etf_price(code)
-            elif security_type == '可转债':
-                price = _get_cb_price(code)
-            else:  # 个股
-                price = _get_stock_price(code)
+    try:
+        if security_type == '基金':
+            price = _get_etf_price_fast(code)
+        elif security_type == '可转债':
+            price = _get_cb_price(code)
+        else:  # 个股
+            price = _get_stock_price_fast(code)
 
-            if price is not None and price > 0:
-                return price
-
-        except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(0.5)  # 短暂等待后重试
-                continue
-            else:
-                # 最后一次尝试失败，记录错误
-                pass
+        if price is not None and price > 0:
+            return price
+    except Exception:
+        pass
 
     return None
 
@@ -77,11 +91,12 @@ def _get_security_type(code: str, name: str) -> str:
 
 
 def _get_stock_price(code: str) -> Optional[float]:
-    """获取A股股票价格"""
+    """获取A股股票价格（慢速模式）"""
     # 尝试获取最近交易日收盘价
     end_date = datetime.now().strftime('%Y%m%d')
     start_date = (datetime.now() - timedelta(days=30)).strftime('%Y%m%d')
 
+    # 方法1: stock_zh_a_hist (历史行情)
     try:
         df = ak.stock_zh_a_hist(
             symbol=code,
@@ -91,16 +106,36 @@ def _get_stock_price(code: str) -> Optional[float]:
         )
 
         if df is not None and not df.empty:
-            # 返回最近收盘价
             return float(df.iloc[-1]['收盘'])
+    except Exception:
+        pass
+
+    # 方法2: stock_zh_a_spot_em (实时行情)
+    try:
+        df = ak.stock_zh_a_spot_em()
+        row = df[df['代码'] == code]
+        if not row.empty:
+            return float(row.iloc[0]['最新价'])
     except Exception:
         pass
 
     return None
 
 
+def _get_stock_price_fast(code: str) -> Optional[float]:
+    """获取A股股票价格（快速模式，只用实时行情）"""
+    try:
+        df = ak.stock_zh_a_spot_em()
+        row = df[df['代码'] == code]
+        if not row.empty:
+            return float(row.iloc[0]['最新价'])
+    except Exception:
+        pass
+    return None
+
+
 def _get_etf_price(code: str) -> Optional[float]:
-    """获取ETF价格"""
+    """获取ETF价格（慢速模式）"""
     # 尝试使用ETF行情接口
     end_date = datetime.now().strftime('%Y%m%d')
     start_date = (datetime.now() - timedelta(days=30)).strftime('%Y%m%d')
@@ -120,6 +155,18 @@ def _get_etf_price(code: str) -> Optional[float]:
 
     # 备选：尝试使用股票接口
     return _get_stock_price(code)
+
+
+def _get_etf_price_fast(code: str) -> Optional[float]:
+    """获取ETF价格（快速模式）"""
+    try:
+        df = ak.fund_etf_spot_em()
+        row = df[df['代码'] == code]
+        if not row.empty:
+            return float(row.iloc[0]['最新价'])
+    except Exception:
+        pass
+    return None
 
 
 def _get_lof_price(code: str) -> Optional[float]:
