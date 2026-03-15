@@ -38,7 +38,7 @@ pip install -r requirements.txt
 python scripts/analysis.py "路径/到/您的/交割单.xlsx"
 ```
 
-脚本运行成功后，将在交割单文件所在的目录下创建一个名为 `股票分析_YYYY-MM-DD` 的文件夹，其中包含了分析结果。
+脚本运行成功后，将在交割单文件所在的目录下创建一个名为 `交易活动回顾_YYYY-MM-DD` 的文件夹，其中包含了分析结果。
 
 ## 📊 输出文件说明
 
