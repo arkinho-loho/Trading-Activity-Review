@@ -41,8 +41,7 @@ def generate_report(
     date_str = datetime.now().strftime('%Y-%m-%d')
     report_path = os.path.join(output_dir, f'分析报告_{date_str}.md')
 
-    # 持仓已在analysis.py步骤5合并，此处直接使用
-    # holdings 已经是合并后的持仓列表（含当前价格和浮动盈亏）
+    # 持仓已在analysis.py步骤5合并，此处直接使用（不含价格信息）
 
     # 生成报告内容
     content = _generate_content(
@@ -109,8 +108,7 @@ def _generate_content(
     lines.append(f"| 总盈亏 | ¥{metrics['total_profit']:.2f} |")
 
     if metrics.get('holdings_count', 0) > 0:
-        lines.append(f"| 持仓数量 | {metrics['holdings_count']} |")
-        lines.append(f"| 纳入持仓计算 | {'是' if metrics.get('include_holdings') else '否'} |")
+        lines.append(f"| 持仓数量 | {metrics['holdings_count']} 只（不纳入指标计算） |")
 
     lines.append("")
 
@@ -296,12 +294,12 @@ def _generate_content(
 
     lines.append("")
 
-    # 6. 持仓明细
+    # 6. 持仓明细（仅展示，不纳入指标计算）
     if holdings:
         lines.append("## 6. 当前持仓")
         lines.append("")
-        lines.append("| 证券代码 | 证券名称 | 买入日期 | 买入价 | 数量 | 现价 | 浮动盈亏 | 盈亏比例 |")
-        lines.append("|----------|----------|----------|--------|------|------|----------|----------|")
+        lines.append("| 证券代码 | 证券名称 | 买入日期 | 买入价 | 数量 |")
+        lines.append("|----------|----------|----------|--------|------|")
 
         for h in holdings:
             code = h.get('code', '')
@@ -311,14 +309,8 @@ def _generate_content(
                 buy_date = buy_date.strftime('%Y-%m-%d')
             buy_price = h.get('buy_price', 0)
             quantity = h.get('quantity', 0)
-            current_price = h.get('current_price')
-            floating = h.get('floating_profit', 0)
-            floating_pct = h.get('floating_profit_pct', 0)
 
-            if current_price is not None and current_price != 'N/A':
-                lines.append(f"| {code} | {name} | {buy_date} | ¥{buy_price:.2f} | {quantity} | ¥{current_price:.2f} | ¥{floating:.2f} | {floating_pct:.2f}% |")
-            else:
-                lines.append(f"| {code} | {name} | {buy_date} | ¥{buy_price:.2f} | {quantity} | N/A | N/A | N/A |")
+            lines.append(f"| {code} | {name} | {buy_date} | ¥{buy_price:.2f} | {quantity} |")
 
         lines.append("")
 
